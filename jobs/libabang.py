@@ -4,7 +4,6 @@ import logging
 import json
 import re
 from dotenv import load_dotenv
-from jobs.settings import TAG_RATE_DATAS
 
 # Get the parent directory
 parent_dir = os.path.dirname(os.path.realpath(__file__))
