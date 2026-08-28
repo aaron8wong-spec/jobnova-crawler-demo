@@ -10,12 +10,12 @@ class ZeroHashSpider(BreezyBase):
     start_urls = [f"{start_url}/json"]
 
 
-### Nucamp -- coding bootcamp
-class NucampSpider(BreezyBase):
-    name = "Nucamp"
-    company_name = "Nucamp"
-    company_slug = "nucamp"
-    start_url = "https://nucamp.breezy.hr"
+### Federal Public Defender, Western District of Texas
+class FederalPublicDefenderTXWSpider(BreezyBase):
+    name = "FederalPublicDefenderTXW"
+    company_name = "Federal Public Defender, Western District of Texas"
+    company_slug = "federal-public-defender-western-district-of-texas"
+    start_url = "https://federal-public-defender-western-district-of-texas.breezy.hr"
     start_urls = [f"{start_url}/json"]
 
 

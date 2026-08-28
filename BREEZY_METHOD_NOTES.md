@@ -25,9 +25,21 @@
    (`https://breezy.hr/customers`), and confirmed two live company career
    pages that name Breezy explicitly as their ATS:
    - **Zero Hash** — `https://zero-hash.breezy.hr/`
-   - **Nucamp** — `https://nucamp.breezy.hr/`
+   - **Federal Public Defender, Western District of Texas** —
+     `https://federal-public-defender-western-district-of-texas.breezy.hr/`
    plus the assignment's own example, **Barloworld Equipment** —
    `https://barloworldequipment.breezy.hr/`.
+
+   **Note on Nucamp**: an earlier candidate, Nucamp
+   (`nucamp.breezy.hr`), was confirmed via Breezy's own customer case
+   studies page but turned out to no longer be hiring through Breezy —
+   the URL now serves Breezy's own "There's no career portal here...the
+   company may no longer be hiring with Breezy HR" 404 page. This is a
+   genuine, useful finding rather than a bug: companies churn off ATS
+   platforms, so any pipeline built against a static company list needs
+   to treat a 404 on `/json` as "company left this ATS," not as a parsing
+   failure, and should periodically re-verify its company list rather
+   than trusting a one-time discovery to stay valid.
 
 ## Implementation
 
