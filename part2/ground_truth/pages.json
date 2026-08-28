@@ -1,0 +1,92 @@
+[
+  {
+    "id": "breezy_zerohash_01",
+    "ats": "Breezy HR",
+    "company": "Zero Hash",
+    "url": "https://zero-hash.breezy.hr/p/0316a5d4e2bd-engineering-manager-web-automation-open-banking-infrastructure",
+    "verified": true,
+    "notes": "Fetched and manually verified. Clean single-column template: header/nav/social links/photo gallery before the JD, footer 'powered by breezy' + apply button after.",
+    "ground_truth_jd": "About the Job\nzerohash is looking for an experienced Engineering Manager to lead the team architecting and building our open banking data aggregation platform. This is a high-performing team tackling deeply technical, adversarial problems in browser internals and secure automation. We're looking for a true technologist with a love of programming and a drive for technical excellence. We believe the best managers are technologists first, with a product mindset, who seek to make a larger impact across the organization. You will lead the team building secure, agent-based automation infrastructure (e.g., Chrome Manifest V3 extensions, iOS WKWebViews), transforming unstructured web data into programmable APIs that bridge traditional finance and digital assets.\n\nResponsibilities\n- Research and design new methods that push the boundaries of secure web automation\n- Lead a team of engineers building the core automation runtime, guiding architecture for resilient UI interactions, reliable programmatic data entry, and robust session routing.\n- Partner closely with product and program managers to ensure the open banking roadmap is well understood and the team can plan and execute on expected outcomes.\n- Work with the team on technical planning to ensure requirements are captured in the technical solution.\n- Partner with other Engineering Managers to drive the broader technical roadmap forward.\n- Support the engineering team in achieving a high level of technical excellence in browser automation, extension development, and secure data extraction.\n- Manage processes to help the team do its best work.\n- Recruit, coach, and develop engineers specializing in web automation, browser internals, and distributed systems.\n- Help engineers establish career development plans.\n- Contribute to engineering-wide initiatives.\n- Participate in essential technical, design, and product discussions with leaders.\n- Work with stakeholders to build a clear vision for the team's role in the open banking ecosystem.\n- Oversee the success of the team's projects, driving resiliency, scalability, and coverage.\n- Introduce industry-leading engineering patterns and practices.\n- Make consistent development contributions.\n\nRequirements\n- 10+ years of hands-on software engineering experience focused on advanced web automation, browser internals, extension development, or complex data extraction.\n- 5+ years of engineering management experience, including managing senior/staff-level engineers.\n- BS or MS in Computer Science/Engineering or equivalent experience.\n- Proven track record managing teams delivering complex, production-grade browser automation or data infrastructure products.\n- Deep proficiency in TypeScript/JavaScript, DOM manipulation, modern web APIs, browser execution environments.\n- Strong backend experience (Golang, Node.js, or Python).\n- Strong security fundamentals across trust boundaries, authentication handshakes, DOM-based injection risks.\n- Experience with distributed systems, persistent connections, stateful multi-hop sessions.\n- Comfort with ambiguity.\n\nPreferred\n- Shipped production-grade browser extensions (Chrome MV3) or mobile web automation (iOS WKWebView, Android WebView).\n- Strong understanding of WebAuthn/Passkey protocols.\n- Prior engineering leadership at a major financial data aggregator or building zero-knowledge/client-side data extraction tools.\n- Understanding of cryptocurrency/blockchain technology.\n\nBenefits\n- Healthcare Insurance (~100% employee premiums, U.S. only)\n- Vision & Dental Insurance (U.S. only)\n- Chance to earn equity\n- Maternity & Paternity leave (after 6 months)\n- WeWork All Access Membership\n- WFH Yearly Stipend\n- L&D Yearly Stipend (after 6 months)"
+  },
+  {
+    "id": "breezy_nucamp_02",
+    "ats": "Breezy HR",
+    "company": "Nucamp",
+    "url": "https://nucamp.breezy.hr/p/8b86860851d6-web-developer-coding-instructor--seattle--wa",
+    "verified": false,
+    "notes": "Same Breezy template as #1 -- once one Breezy template's rules are learned, they should transfer to this page with zero additional LLM calls. Ground truth to be filled in by running the pipeline's manual-verification step against the live page.",
+    "ground_truth_jd": null
+  },
+  {
+    "id": "cisco_legacy_03",
+    "ats": "Cisco custom (legacy 'ProjectDetail' template)",
+    "company": "Cisco",
+    "url": "https://jobs.cisco.com/jobs/ProjectDetail/Solutions-Engineer/1435231",
+    "verified": true,
+    "notes": "IMPORTANT real-world case: this URL now 302-redirects to careers.cisco.com (Phenom People platform) -- Cisco migrated career-site vendors since the URL was indexed. This is the exact 'page-structure changed / template stopped matching' failure mode the hybrid design below has to detect and fall back from. Confirms the requirement isn't hypothetical.",
+    "ground_truth_jd": null
+  },
+  {
+    "id": "cisco_phenom_04",
+    "ats": "Phenom People (current Cisco career site)",
+    "company": "Cisco",
+    "url": "https://careers.cisco.com/global/en/job/...",
+    "verified": false,
+    "notes": "Placeholder for a live current Cisco job detail page on the new Phenom People template. Grab an active job ID from careers.cisco.com/global/search-results and fill in ground truth.",
+    "ground_truth_jd": null
+  },
+  {
+    "id": "smartrecruiters_visa_05",
+    "ats": "SmartRecruiters",
+    "company": "Visa",
+    "url": "https://api.smartrecruiters.com/v1/companies/visa/postings?limit=20&offset=0&destination=PUBLIC&locationType=ANY&q=",
+    "notes": "SmartRecruiters exposes JD text directly as structured JSON fields (jobAd.sections: jobDescription, qualifications, additionalInformation) via its public postings API -- given as an example endpoint in the assignment itself. This is the 'best case': no HTML cleaning needed at all, so it's a useful zero-cost baseline in the comparison table.",
+    "verified": false,
+    "ground_truth_jd": null
+  },
+  {
+    "id": "avature_bloomberg_06",
+    "ats": "Avature",
+    "company": "Bloomberg",
+    "url": "https://bloomberg.avature.net/en_US/careers/SearchJobs",
+    "notes": "JS-rendered SPA (see jobs/spiders/pr_bloomberg.py in this repo, which already uses Playwright for it) -- a good template representative of ATSs that require headless-browser rendering before any extraction (LLM or rule-based) can run at all.",
+    "verified": false,
+    "ground_truth_jd": null
+  },
+  {
+    "id": "icims_07",
+    "ats": "iCIMS",
+    "company": "TBD",
+    "url": null,
+    "notes": "Pick any live company on iCIMS (search '<company> careers icims.com'); iCIMS templates are heavily wrapped in nav/breadcrumb/share-widget chrome, useful contrast to Breezy's cleaner template.",
+    "verified": false,
+    "ground_truth_jd": null
+  },
+  {
+    "id": "jazzhr_08",
+    "ats": "JazzHR",
+    "company": "TBD",
+    "url": null,
+    "notes": "Pick a company at '<name>.applytojob.com'.",
+    "verified": false,
+    "ground_truth_jd": null
+  },
+  {
+    "id": "workday_09",
+    "ats": "Workday (company career page, not in appendix but common in the wild)",
+    "company": "TBD",
+    "url": null,
+    "notes": "Workday job pages hydrate JD text from an internal JSON blob embedded in the page (window.workday... or a same-origin XHR) rather than static HTML -- good template-family contrast for the 'DOM patterns vs structured-data rules' distinction called out in the assignment.",
+    "verified": false,
+    "ground_truth_jd": null
+  },
+  {
+    "id": "teamtailor_10",
+    "ats": "Teamtailor",
+    "company": "TBD",
+    "url": null,
+    "notes": "Pick a company at '<name>.teamtailor.com'; Teamtailor job pages are server-rendered with a very consistent class-name scheme, good candidate for durable CSS-selector rules.",
+    "verified": false,
+    "ground_truth_jd": null
+  }
+]
