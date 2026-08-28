@@ -8,6 +8,16 @@ Usage
     python pipeline.py compare ground_truth/pages.json
     python pipeline.py project-cost --pages 100000 --pages-per-template 250
 
+Mock mode (no API key / no spend, for demos and control-flow testing only):
+    python pipeline.py extract <url> --mock
+    MOCK_LLM=1 python pipeline.py compare ground_truth/pages.json
+In mock mode, the two LLM tiers are replaced with a cheap heuristic
+(largest text-dense HTML block) instead of a real model call. Every mock
+result is tagged "[MOCK] <model-name>" in model_used and costs $0, so it
+can never be mistaken for a real measurement -- it only demonstrates that
+the pipeline's control flow (fingerprinting, cache lookups, validation,
+fallback tiers, logging) runs correctly end-to-end.
+
 Design notes are in DESIGN.md. This file is a runnable prototype, not a
 polished library: network fetching is minimal (requests + BeautifulSoup),
 and the LLM calls go straight to the Anthropic Messages API. Swap in
@@ -36,9 +46,25 @@ LOG_PATH = HERE / "logs" / "extractions.jsonl"
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
+# Mock mode: set MOCK_LLM=1 (or pass --mock on the CLI) to run the full
+# pipeline control-flow -- fingerprinting, cache lookups, validation,
+# rule-caching, logging -- without ever calling the real Anthropic API.
+# This costs nothing and needs no API key, but the returned "extractions"
+# are canned placeholder text, NOT real model output -- every mock result
+# is tagged so it's never mistaken for a real measurement. Useful for
+# demoing/verifying the pipeline's logic and for a demo recording when you
+# don't want to spend on real API calls.
+MOCK_LLM = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
+
 # Model tiers -- see DESIGN.md for why these two tiers exist.
 CHEAP_MODEL = "claude-haiku-4-5-20251001"   # per-page fallback extraction
 STRONG_MODEL = "claude-sonnet-5"            # per-template rule generation
+
+
+def _model_label(model: str) -> str:
+    """Tags a model name with [MOCK] in logs/output when MOCK_LLM is on,
+    so a mock run's model_used field can never be confused with a real one."""
+    return f"[MOCK] {model}" if MOCK_LLM else model
 
 # $ / million tokens -- update to whatever your account's actual pricing is.
 # These are placeholders so the cost model is runnable end-to-end; treat the
@@ -238,7 +264,48 @@ def _call_anthropic(model: str, system: str, user: str, max_tokens: int = 2000):
     return text, usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
+def _mock_extract_cheap(html: str) -> tuple[str, int, int]:
+    """Stand-in for llm_extract_cheap when MOCK_LLM is on. Uses a crude
+    heuristic (largest text-dense block) instead of a real model call, so
+    the pipeline's control flow and logging can be exercised for free. The
+    output is explicitly tagged [MOCK] so it's never mistaken for a real
+    extraction result."""
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
+        tag.decompose()
+    blocks = soup.find_all(["div", "section", "article", "main"])
+    best = max(blocks, key=lambda b: len(b.get_text(strip=True)), default=soup)
+    text = "[MOCK LLM OUTPUT -- not a real model call]\n\n" + best.get_text("\n").strip()[:2000]
+    fake_input_tokens = min(len(html) // 4, 12000)   # rough chars->token guess
+    fake_output_tokens = len(text) // 4
+    return text, fake_input_tokens, fake_output_tokens
+
+
+def _mock_generate_rule(html: str) -> tuple[Optional[dict], int, int]:
+    """Stand-in for llm_generate_rule when MOCK_LLM is on. Picks the
+    largest text-dense container's tag+class as a plausible-looking
+    selector, without any real model reasoning. Good enough to exercise
+    the rule-cache path end-to-end for free; not a substitute for the real
+    strong-model rule generation this is meant to represent."""
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(["script", "style"]):
+        tag.decompose()
+    blocks = soup.find_all(["div", "section", "article", "main"])
+    best = max(blocks, key=lambda b: len(b.get_text(strip=True)), default=None)
+    if best is None:
+        return None, 0, 0
+    classes = best.get("class")
+    selector = f"{best.name}.{classes[0]}" if classes else best.name
+    fake_input_tokens = min(len(html) // 4, 20000)
+    fake_output_tokens = 15
+    return {"css_selector": selector, "_mock": True}, fake_input_tokens, fake_output_tokens
+
+
+
 def llm_extract_cheap(html: str) -> tuple[str, int, int]:
+    if MOCK_LLM:
+        return _mock_extract_cheap(html)
+
     # Trim to keep the cheap-model call cheap; a real implementation would
     # pre-strip <script>/<style>/nav/footer tags before this truncation.
     soup = BeautifulSoup(html, "html.parser")
@@ -257,6 +324,9 @@ def llm_extract_cheap(html: str) -> tuple[str, int, int]:
 
 
 def llm_generate_rule(html: str) -> tuple[Optional[dict], int, int]:
+    if MOCK_LLM:
+        return _mock_generate_rule(html)
+
     truncated = html[:20000]
     system = (
         "You analyze the HTML of a job-detail page and output a single JSON "
@@ -274,6 +344,8 @@ def llm_generate_rule(html: str) -> tuple[Optional[dict], int, int]:
 
 
 def cost_of(model: str, in_tok: int, out_tok: int) -> float:
+    if MOCK_LLM:
+        return 0.0  # no real API call was made, so no real spend occurred
     price = PRICE_PER_MTOK[model]
     return (in_tok / 1_000_000) * price["input"] + (out_tok / 1_000_000) * price["output"]
 
@@ -336,7 +408,7 @@ def extract(url: str, html: Optional[str] = None) -> ExtractionResult:
             save_rules(rules)
             return _finish(
                 url, domain, html, "llm_strong_regen", applied, t0, fp=fp,
-                model=STRONG_MODEL, in_tok=rin, out_tok=rout, cost=rule_cost,
+                model=_model_label(STRONG_MODEL), in_tok=rin, out_tok=rout, cost=rule_cost,
             )
 
     # Neither cached/regenerated rule nor cheap LLM produced a confident
@@ -344,7 +416,7 @@ def extract(url: str, html: Optional[str] = None) -> ExtractionResult:
     if cheap_conf >= 0.4:
         result = _finish(
             url, domain, html, "llm_cheap", cheap_text, t0, fp=fp,
-            model=CHEAP_MODEL, in_tok=in_tok, out_tok=out_tok, cost=cheap_cost,
+            model=_model_label(CHEAP_MODEL), in_tok=in_tok, out_tok=out_tok, cost=cheap_cost,
         )
         result.confidence = cheap_conf
         return result
@@ -353,7 +425,7 @@ def extract(url: str, html: Optional[str] = None) -> ExtractionResult:
         url=url, template_fingerprint=fp, path_taken="manual_review",
         text=cheap_text, confidence=cheap_conf,
         latency_ms=(time.time() - t0) * 1000,
-        model_used=CHEAP_MODEL, input_tokens=in_tok, output_tokens=out_tok,
+        model_used=_model_label(CHEAP_MODEL), input_tokens=in_tok, output_tokens=out_tok,
         cost_usd=cheap_cost, error=cheap_err,
     )
 
@@ -452,15 +524,24 @@ if __name__ == "__main__":
 
     p_extract = sub.add_parser("extract")
     p_extract.add_argument("url")
+    p_extract.add_argument("--mock", action="store_true",
+                            help="Use canned heuristic output instead of real "
+                                 "LLM calls (no API key needed, costs $0). "
+                                 "Equivalent to MOCK_LLM=1.")
 
     p_compare = sub.add_parser("compare")
     p_compare.add_argument("ground_truth_path")
+    p_compare.add_argument("--mock", action="store_true",
+                            help="Same as extract --mock, applied to the whole batch.")
 
     p_cost = sub.add_parser("project-cost")
     p_cost.add_argument("--pages", type=int, default=100_000)
     p_cost.add_argument("--pages-per-template", type=int, default=250)
 
     args = parser.parse_args()
+
+    if getattr(args, "mock", False):
+        MOCK_LLM = True
 
     if args.cmd == "extract":
         r = extract(args.url)

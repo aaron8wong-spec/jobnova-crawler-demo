@@ -108,6 +108,19 @@ Before falling back to either LLM path, check for:
   treats "structured data available" as tier 0, ahead of both cached CSS
   rules and any LLM call.
 
+**Confirmed finding**: testing against a live Greenhouse-hosted posting
+(`job-boards.greenhouse.io/cloudflare/jobs/...`) showed the plain
+`requests.get()` fetch in this prototype pulls mostly the static career-site
+*shell* (nav, company stats, values) rather than the job description body,
+which Greenhouse renders client-side via JavaScript after initial page load.
+This is the same class of problem `pr_bloomberg.py` already solves for
+Avature with Playwright elsewhere in this repo — a production version of
+this pipeline needs the same headless-render step for any ATS template that
+hydrates JD content via JS (Greenhouse, Workday, and others), not just a
+plain HTTP fetch. The fetch/fingerprint/validate/cache logic in this
+prototype is unaffected by that limitation, but the *content it's fed* is
+only as good as what a plain `requests.get()` can see.
+
 ### Validation heuristic (governs every fallback decision)
 
 A quick, cheap, deterministic check run on *any* candidate extraction
